@@ -80,7 +80,6 @@ void PX::switchAdr() {
      // base address
     switch(_adrCount) {
     case 0:   // this is the GLEISSPANNUNG bit        
-        _trackBit = _bit;
         break;                                               
     case 1:         
     case 4:
@@ -209,7 +208,7 @@ void PX::isr() {
      //     3. DATA = (after ADDR decoded) decode the 7 data-bytes
   
     // is SX2 = high ??
-    _inbit = (SX2_PINREG & __BV(SX2_PORTPINT)) > 0;  
+    _inbit = (SX2_PINREG & _BV(SX2_PORTPIN)) > 0;  
     // (if not, SX1 must have caused this interrupt)
 
     // sx bit is high, when the polarity has changed
