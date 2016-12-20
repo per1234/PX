@@ -78,6 +78,7 @@ void PX::init(uint8_t tba) {
 void PX::switchAdr() {
      // a SYNC signal was received, now look for a valid
      // base address
+
     switch(_adrCount) {
     case 0:   // this is the GLEISSPANNUNG bit        
         break;                                               
@@ -121,7 +122,15 @@ void PX::switchData() {
     case 2:  // "Trenn_bits"
     case 5:
     case 8:
-        _dataBitCount++;
+        if (_bit == 1) {
+           _dataBitCount++;
+        } else {
+           // ERROR => reset to SYNC state
+            _dataFrameCount=0;
+            _state =SYNC;
+            _zeroCount = 0;
+            _dataBitCount=0;
+        }
         break; // ignore
     case 0:  // D0
         _data=0;
@@ -206,15 +215,47 @@ void PX::isr() {
      //     1. SNYC = looking for a SYNC signal
      //     2. ADDR = (after SYNC received) look for base address (0..15)
      //     3. DATA = (after ADDR decoded) decode the 7 data-bytes
-  
+    
     // is SX2 = high ??
-    _inbit = (SX2_PINREG & _BV(SX2_PORTPIN)) > 0;  
+    //_inbit = (SX2_PINREG & ( _BV(SX2_PORTPIN) ) ) > 0;
+
+    //_inbit = (SX2_PINREG & _BV(SX2_PORTPIN)) > 0;  
     // (if not, SX1 must have caused this interrupt)
 
     // sx bit is high, when the polarity has changed
     // sx bit is low (0), when the polarity has not changed
-    _bit = ~(_inbit == _lastInbit);  
-    _lastInbit = _inbit;         
+
+    //_bit = ~(_inbit == _lastInbit);  
+    //ncount = _bit;
+    //_lastInbit = _inbit;         
+
+    uint8_t _inputd = PIND & ( (1 << SX1) | (1 << SX2) );
+    uint8_t _in;
+
+    
+    if  (_inputd == (1 << SX1)) {
+        // SX1 toggled and is high
+        _in = 1;
+        //	PORTA |= (1 << PA1);
+
+        } else if  (_inputd == (1 << SX2)) {
+        // SX2 toggled and is high
+        _in = 0;
+        // 	PORTA |= (1 << PA1);
+        
+        } else {
+        //	PORTA &= ~(1 << PA1);
+        return;
+    }
+    
+    //_lastinputb = _inputb;
+    if (_lastInbit == _in) {
+        _bit = LOW;
+        } else {
+        _bit = HIGH;
+    }
+    _lastInbit = _in;
+
 
     switch(_state) {
     case SYNC:
@@ -226,6 +267,7 @@ void PX::isr() {
                 _state = ADDR;         // advance to next state
                 _baseAdr = 0;   //init
                 _adrCount = 0;  //init
+
             } else {  // no valid sync, try again ...
                 _zeroCount = 0;       // reset _zeroCounter
             } // endif _zeroCount
@@ -239,7 +281,6 @@ void PX::isr() {
         switchData();
     }
 }
-
 
 
 

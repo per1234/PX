@@ -36,7 +36,6 @@
 #include <inttypes.h>
 
 // define arduino pins, ports and bits              //Tha
-#define SX_CLK          2     // must be INT0 !!
 
 #define SX1         2
 #define SX1_DDR     DDRD                        //Tha: for faster direct bitwise operations
@@ -47,7 +46,7 @@
 #define SX2         3
 #define SX2_DDR     DDRD                        //Tha: for faster direct bitwise operations
 #define SX2_PORT    PORTD                       //Tha
-#define SX2_PORTPIN PORTD2                      //Tha
+#define SX2_PORTPIN PORTD3                      //Tha
 #define SX2_PINREG  PIND
 
 #define SCOPE           5   
@@ -73,6 +72,7 @@ public:
     void init(uint8_t);	   // when using scope signal
 	uint8_t get(uint8_t);
 	void isr(void);
+        volatile uint32_t ncount =0;
 
 private:
 	void switchAdr(void);
@@ -93,12 +93,13 @@ private:
 	uint8_t _bit;
     uint8_t _inbit;
     uint8_t _lastInbit;
-	uint8_t _sx[MAX_CHANNEL_NUMBER];   // to store the SX data
+	volatile uint8_t _sx[MAX_CHANNEL_NUMBER];   // to store the SX data
 
 	uint8_t _channel;   // channel from 0 to 15, B3..B0 in sync data
 	// 0  0  0  1  X   1  B3  B2  1  B1  B0  1 == sync frame of 12 bits
 	
 
+  
 	/* SX Timing
 	 1   Bit             50 µs
 	 1   Kanal          600 µs (= 12 Bit)
