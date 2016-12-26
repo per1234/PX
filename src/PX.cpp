@@ -32,71 +32,58 @@
 
  */
 
-
 #include <Arduino.h>
 
 #include "PX.h"
 
+extern volatile uint32_t n_int;
 
 PX::PX() {
     _scopeFlag = 0;
 }
 
 void PX::init() {
-     // initialize function
-     // initialize pins and variables
-     // and start looking for a SYNC signal
+    // initialize function
+    // initialize pins and variables
+    // and start looking for a SYNC signal
 
     pinMode(SX1, INPUT);     // track 1 input
     pinMode(SX2, INPUT);      // track 2 input
 
-    for (int i=0; i<112;i++) {
-          // reset sx variable to zero
-        _sx[i]=0;
+    for (int i = 0; i < 112; i++) {
+        // reset sx variable to zero
+        _sx[i] = 0;
     }
-     _toggle=0;
-    _adrCount =0;
+    _toggle = 0;
+    _adrCount = 0;
 
     // start always with search for SYNC
     _state = SYNC;
     _zeroCount = 0;
 }
 
-void PX::init(uint8_t tba) {
-    // special init which enable a scope trigger
-    // at a Selectrix address tba (must be 0..112)
-    // scope will go high at bit 12 of this address!!
-    // i.e. interesting data are shortly BEFORE
-    // this trigger
-    _scopeFlag=1;
-     pinMode(SCOPE,OUTPUT);
-    _triggerAdr = tba;
-    init();
-}
-
-
 void PX::switchAdr() {
-     // a SYNC signal was received, now look for a valid
-     // base address
+    // a SYNC signal was received, now look for a valid
+    // base address
 
-    switch(_adrCount) {
+    switch (_adrCount) {
     case 0:   // this is the GLEISSPANNUNG bit        
-        break;                                               
-    case 1:         
+        break;
+    case 1:
     case 4:
         break; // ignore, should be checked to get less sensitive to
                // interruptions
     case 2:  // B3
-        bitWrite(_baseAdr,3,_bit);
+        bitWrite(_baseAdr, 3, _bit);
         break;
     case 3:  // B2
-        bitWrite(_baseAdr,2,_bit);
+        bitWrite(_baseAdr, 2, _bit);
         break;
     case 5:  // B1
-        bitWrite(_baseAdr,1,_bit);
+        bitWrite(_baseAdr, 1, _bit);
         break;
     case 6:  // B0
-        bitWrite(_baseAdr,0,_bit);
+        bitWrite(_baseAdr, 0, _bit);
         break;
     case 7: // last "1"
         // _baseAdr is complete !
@@ -106,7 +93,7 @@ void PX::switchAdr() {
         _state = DATA;
         _dataFrameCount = 0;
         _dataBitCount = 0;
-        _data=0;
+        _data = 0;
         break;
     }
 }
@@ -116,80 +103,75 @@ void PX::switchData() {
     // a total of 7 DATA blocks will be received
     // for a certain base-address
     // calc sx channel from baseAdr and dataFrameCount
-    _channel = (15-_baseAdr) + ((6-_dataFrameCount)<<4);
+    _channel = (15 - _baseAdr) + ((6 - _dataFrameCount) << 4);
 
-    switch(_dataBitCount) {
+    switch (_dataBitCount) {
     case 2:  // "Trenn_bits"
     case 5:
     case 8:
         if (_bit == 1) {
-           _dataBitCount++;
+            _dataBitCount++;
         } else {
-           // ERROR => reset to SYNC state
-            _dataFrameCount=0;
-            _state =SYNC;
+            // ERROR => reset to SYNC state
+            _dataFrameCount = 0;
+            _state = SYNC;
             _zeroCount = 0;
-            _dataBitCount=0;
+            _dataBitCount = 0;
         }
         break; // ignore
     case 0:  // D0
-        _data=0;
-        bitWrite(_data,0,_bit);
+        _data = 0;
+        bitWrite(_data, 0, _bit);
         _dataBitCount++;
-
-        if (_scopeFlag) {                                           //Tha: also watching _scopeFlag..
-            if (_channel ==  _triggerAdr) {                         //     (bugfix 30.01.2015)
-                bitWrite(SCOPE_PORT, SCOPE_PORTPIN, HIGH);          //Tha: digitalWrite(SCOPE,HIGH);
-            }
-            else {
-                bitWrite(SCOPE_PORT, SCOPE_PORTPIN, LOW);           //Tha: digitalWrite(SCOPE,LOW);
-            }
-        }
-
         break;
     case 1:  // D1   
-        bitWrite(_data,1,_bit);
+        bitWrite(_data, 1, _bit);
         _dataBitCount++;
         break;
     case 3:  // D2 
-        bitWrite(_data,2,_bit);
+        bitWrite(_data, 2, _bit);
         _dataBitCount++;
         break;
     case 4:  // D3                               
-        bitWrite(_data,3,_bit);
+        bitWrite(_data, 3, _bit);
         _dataBitCount++;
         break;
     case 6:  // D4
-        bitWrite(_data,4,_bit);
+        bitWrite(_data, 4, _bit);
         _dataBitCount++;
         break;
     case 7:  // D5
-        bitWrite(_data,5,_bit);
+        bitWrite(_data, 5, _bit);
         _dataBitCount++;
         break;
     case 9:  // D6
-        bitWrite(_data,6,_bit);
+        bitWrite(_data, 6, _bit);
         _dataBitCount++;
         break;
     case 10: // D7
-         bitWrite(_data,7,_bit);
+        bitWrite(_data, 7, _bit);
         _dataBitCount++;
         break;
     case 11:  // == MAX_DATABITCOUNT
         // _bit value should always equal HIGH, not tested here.
         // copy _data byte to SX _channel
+
         _sx[_channel] = _data;
+
+        if (_channel == 14) {
+            n_int++;
+        }
 
         // increment dataFrameCount to move on the next DATA byte
         // check, if we already reached the last DATA block - in this
         // case move on to the next SX-Datenpaket, i.e. look for SYNC
-        _dataFrameCount ++;
+        _dataFrameCount++;
         if (_dataFrameCount == MAX_DATACOUNT) {
             // and move on to SYNC _state
-            _dataFrameCount=0;
-            _state =SYNC;
+            _dataFrameCount = 0;
+            _state = SYNC;
             _zeroCount = 0;
-            _dataBitCount=0;
+            _dataBitCount = 0;
         } else {
             _dataBitCount = 0;  // reset _bit counter
             _data = 0;
@@ -199,11 +181,11 @@ void PX::switchData() {
 }
 
 uint8_t PX::get(uint8_t channel) {
-     // returns the value of a SX channel
+    // returns the value of a SX channel
     if (channel < MAX_CHANNEL_NUMBER)
-       return _sx[channel];
+        return _sx[channel];
     else
-       return 0;
+        return 0;
 }
 
 void PX::isr() {
@@ -211,11 +193,11 @@ void PX::isr() {
     // interrupt service routine 
     // driven by RISING signal INT0 and INT1 (pins 2 and 3 on ATmega328)
 
-     // 3 different states are distinguished
-     //     1. SNYC = looking for a SYNC signal
-     //     2. ADDR = (after SYNC received) look for base address (0..15)
-     //     3. DATA = (after ADDR decoded) decode the 7 data-bytes
-    
+    // 3 different states are distinguished
+    //     1. SNYC = looking for a SYNC signal
+    //     2. ADDR = (after SYNC received) look for base address (0..15)
+    //     3. DATA = (after ADDR decoded) decode the 7 data-bytes
+
     // is SX2 = high ??
     //_inbit = (SX2_PINREG & ( _BV(SX2_PORTPIN) ) ) > 0;
 
@@ -227,43 +209,42 @@ void PX::isr() {
 
     //_bit = ~(_inbit == _lastInbit);  
     //ncount = _bit;
-    //_lastInbit = _inbit;         
+    //_lastInbit = _inbit;    
 
-    uint8_t _inputd = PIND & ( (1 << SX1) | (1 << SX2) );
-    uint8_t _in;
+    /*  uint8_t _inputd = PIND & ( (1 << SX1) | (1 << SX2) );
+     uint8_t _in;
 
-    
-    if  (_inputd == (1 << SX1)) {
-        // SX1 toggled and is high
-        _in = 1;
-        //	PORTA |= (1 << PA1);
+     
+     if  (_inputd == (1 << SX1)) {
+     // SX1 toggled and is high
+     _in = 1;
+     //	PORTA |= (1 << PA1);
 
-        } else if  (_inputd == (1 << SX2)) {
-        // SX2 toggled and is high
-        _in = 0;
-        // 	PORTA |= (1 << PA1);
-        
-        } else {
-        //	PORTA &= ~(1 << PA1);
-        return;
-    }
-    
+     } else if  (_inputd == (1 << SX2)) {
+     // SX2 toggled and is high
+     _in = 0;
+     // 	PORTA |= (1 << PA1);
+     
+     } else {
+     //	PORTA &= ~(1 << PA1);
+     return;
+     }  */
+
     //_lastinputb = _inputb;
-    if (_lastInbit == _in) {
+    if (_lastInbit == 1) {
         _bit = LOW;
-        } else {
+    } else {
         _bit = HIGH;
     }
-    _lastInbit = _in;
+    _lastInbit = 1;
 
-
-    switch(_state) {
+    switch (_state) {
     case SYNC:
 
-        if (_bit == LOW)  {
+        if (_bit == LOW) {
             _zeroCount++;
         } else {
-            if (_zeroCount == 3)  {        // sync bits 0 0 0 1 found
+            if (_zeroCount == 3) {        // sync bits 0 0 0 1 found
                 _state = ADDR;         // advance to next state
                 _baseAdr = 0;   //init
                 _adrCount = 0;  //init
@@ -280,7 +261,82 @@ void PX::isr() {
     case DATA:
         switchData();
     }
+
 }
 
+void PX::isr2() {
 
+    // interrupt service routine 
+    // driven by RISING signal INT0 and INT1 (pins 2 and 3 on ATmega328)
+
+    // 3 different states are distinguished
+    //     1. SNYC = looking for a SYNC signal
+    //     2. ADDR = (after SYNC received) look for base address (0..15)
+    //     3. DATA = (after ADDR decoded) decode the 7 data-bytes
+
+    // is SX2 = high ??
+    //_inbit = (SX2_PINREG & ( _BV(SX2_PORTPIN) ) ) > 0;
+
+    //_inbit = (SX2_PINREG & _BV(SX2_PORTPIN)) > 0;  
+    // (if not, SX1 must have caused this interrupt)
+
+    // sx bit is high, when the polarity has changed
+    // sx bit is low (0), when the polarity has not changed
+
+    //_bit = ~(_inbit == _lastInbit);  
+    //ncount = _bit;
+    //_lastInbit = _inbit;    
+
+    /*    uint8_t _inputd = PIND & ( (1 << SX1) | (1 << SX2) );
+     uint8_t _in;
+
+     
+     if  (_inputd == (1 << SX1)) {
+     // SX1 toggled and is high
+     _in = 1;
+     //	PORTA |= (1 << PA1);
+
+     } else if  (_inputd == (1 << SX2)) {
+     // SX2 toggled and is high
+     _in = 0;
+     // 	PORTA |= (1 << PA1);
+     
+     } else {
+     //	PORTA &= ~(1 << PA1);
+     return;
+     }  */
+
+    //_lastinputb = _inputb;
+    if (_lastInbit == 0) {
+        _bit = LOW;
+    } else {
+        _bit = HIGH;
+    }
+    _lastInbit = 0;
+
+    switch (_state) {
+    case SYNC:
+
+        if (_bit == LOW) {
+            _zeroCount++;
+        } else {
+            if (_zeroCount == 3) {        // sync bits 0 0 0 1 found
+                _state = ADDR;         // advance to next state
+                _baseAdr = 0;   //init
+                _adrCount = 0;  //init
+
+            } else {  // no valid sync, try again ...
+                _zeroCount = 0;       // reset _zeroCounter
+            } // endif _zeroCount
+        }  // endif _bit==LOW
+        break;
+    case ADDR:
+        switchAdr();
+        _adrCount++;
+        break;
+    case DATA:
+        switchData();
+    }
+
+}
 

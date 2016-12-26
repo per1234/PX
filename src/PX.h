@@ -49,11 +49,6 @@
 #define SX2_PORTPIN PORTD3                      //Tha
 #define SX2_PINREG  PIND
 
-#define SCOPE           5   
-#define SCOPE_DDR       DDRD                        //Tha: for faster direct bitwise operations
-#define SCOPE_PORT      PORTD                       //Tha
-#define SCOPE_PORTPIN   PORTD5      //PORTD3        //Tha
-
 
 // defines for state machine
 #define SYNC  0
@@ -69,10 +64,11 @@ class PX {
 public:
 	PX();
 	void init(void);
-    void init(uint8_t);	   // when using scope signal
-	uint8_t get(uint8_t);
+    	uint8_t get(uint8_t);
 	void isr(void);
-        volatile uint32_t ncount =0;
+void isr2(void);
+
+
 
 private:
 	void switchAdr(void);
@@ -98,11 +94,11 @@ private:
 	uint8_t _channel;   // channel from 0 to 15, B3..B0 in sync data
 	// 0  0  0  1  X   1  B3  B2  1  B1  B0  1 == sync frame of 12 bits
 	
-
+        
   
 	/* SX Timing
-	 1   Bit             50 µs
-	 1   Kanal          600 µs (= 12 Bit)
+	 1   Bit             50 us
+	 1   Kanal          600 us (= 12 Bit)
 	 1   Grundrahmen    ca. 4,8 ms
 	 1   Gesamtrahmen   ca.  80 ms (= 16 Grundrahmen)  */
 };

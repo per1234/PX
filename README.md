@@ -1,6 +1,8 @@
 # PX (Gleisspannung) Arduino Selectrix Bibliothek für den ATmega328
 
-Eine Arduino Bibliothek, um Selectrix Gleissignale zu dekodieren und zu lesen
+Eine Arduino Bibliothek, um Selectrix Gleissignale zu dekodieren.
+
+Diese verwendet zB der "Arduino Lok-Decoder" (mit ATmega328).
 
 Lesen Sie mehr (auch über die benötigte Add-On HW für den Arduino), unter:
 <a href="http://opensx.net">opensx.net</a>
