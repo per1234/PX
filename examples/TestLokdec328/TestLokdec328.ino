@@ -4,10 +4,9 @@
 
  Test des lokdekoder mit ATmega328P
  (sx-lok-dec2-328)
- mit high speed pwm (31kHz)
+ 
  
  */
-
 #include "Arduino.h"
 #include "PX.h"
 //#include <Adafruit_SleepyDog.h>
@@ -18,6 +17,9 @@
 #define PXADDR  14
 #define FIN    9
 #define RIN   10   
+
+//#define DEBUG
+#define DEBUG_7SEG
 //#define LA_F   5
 //#define LA_R   6
 //#define FUNC1  4
@@ -34,13 +36,23 @@ void setup() {
     // initialize digital pin LED_BUILTIN as an output.
     digitalWrite(LED_BUILTIN, HIGH);
     pinMode(LED_BUILTIN, OUTPUT);
+#ifdef DEBUG
     Serial.begin(115200);
     Serial.println(HW);
     Serial.println(SW);
+#endif
+#ifdef DEBUG_7SEG
+    Serial.begin(9600);
+#endif
+
     setPwmFrequency(1);
     uint8_t mode1 = TCCR1B & B00000111;
+
+#ifdef DEBUG
     Serial.print("pwm mode=");
     Serial.println(mode1);
+#endif
+   
     pinMode(FIN, OUTPUT);
     pinMode(RIN, OUTPUT);
     digitalWrite(FIN, HIGH);  // brake
@@ -164,21 +176,11 @@ void loop() {
     if ((millis() - t1) >= 1000) {
 
         t1 = millis();
-
+#ifdef DEBUG
         Serial.print(t1);
         Serial.print(" ");
         Serial.print(n_int);
         Serial.print(" ");
-          if (n_int < 9) {
-         errorCount++;
-         if (errorCount >= 5) {
-         Serial.print(" RESET ");
-         errorCount = 0;
-         }
-         } else {
-         errorCount = 0;
-         }
-         n_int = 0; 
         Serial.print(pxvalue);
         Serial.print(" ");
         Serial.print(horn);
@@ -190,6 +192,27 @@ void loop() {
         Serial.print(actSpeed);
         Serial.print(" ");
         Serial.println(feedback);
+#endif
+#ifdef DEBUG_7SEG
+        Serial.write(0x76);   // clear
+        char c = '9';
+        if (n_int < 9) {
+           char c = '0' + n_int;
+        } 
+        Serial.write(c);      // sig strength 0..9
+        Serial.write('-');
+        Serial.print(speedin);  // speed from sx inpu
+#endif
+  /*      if (n_int < 9) {
+         errorCount++;
+         if (errorCount >= 5) {
+         errorCount = 0;
+         }
+         } else {
+         errorCount = 0;
+        } */
+        n_int = 0; 
+        
         delay(50);
     } else {   
         delay(150);
