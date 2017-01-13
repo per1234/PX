@@ -35,19 +35,11 @@
 
 #include <inttypes.h>
 
-// define arduino pins, ports and bits              //Tha
+// define arduino pins 
 
-#define SX1         2
-#define SX1_DDR     DDRD                        //Tha: for faster direct bitwise operations
-#define SX1_PORT    PORTD                       //Tha
-#define SX1_PORTPIN PORTD2                      //Tha
-#define SX1_PINREG  PIND
+#define SX1         2    // input of "positive" signal
+#define SX2         3    // input of "negative" signal
 
-#define SX2         3
-#define SX2_DDR     DDRD                        //Tha: for faster direct bitwise operations
-#define SX2_PORT    PORTD                       //Tha
-#define SX2_PORTPIN PORTD3                      //Tha
-#define SX2_PINREG  PIND
 
 
 // defines for state machine

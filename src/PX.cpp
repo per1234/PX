@@ -191,52 +191,19 @@ uint8_t PX::get(uint8_t channel) {
 void PX::isr() {
 
     // interrupt service routine 
-    // driven by RISING signal INT0 and INT1 (pins 2 and 3 on ATmega328)
+    // driven by RISING signal INT0 (pins 2 ATmega328)
 
     // 3 different states are distinguished
     //     1. SNYC = looking for a SYNC signal
     //     2. ADDR = (after SYNC received) look for base address (0..15)
     //     3. DATA = (after ADDR decoded) decode the 7 data-bytes
 
-    // is SX2 = high ??
-    //_inbit = (SX2_PINREG & ( _BV(SX2_PORTPIN) ) ) > 0;
-
-    //_inbit = (SX2_PINREG & _BV(SX2_PORTPIN)) > 0;  
-    // (if not, SX1 must have caused this interrupt)
-
-    // sx bit is high, when the polarity has changed
-    // sx bit is low (0), when the polarity has not changed
-
-    //_bit = ~(_inbit == _lastInbit);  
-    //ncount = _bit;
-    //_lastInbit = _inbit;    
-
-    /*  uint8_t _inputd = PIND & ( (1 << SX1) | (1 << SX2) );
-     uint8_t _in;
-
-     
-     if  (_inputd == (1 << SX1)) {
-     // SX1 toggled and is high
-     _in = 1;
-     //	PORTA |= (1 << PA1);
-
-     } else if  (_inputd == (1 << SX2)) {
-     // SX2 toggled and is high
-     _in = 0;
-     // 	PORTA |= (1 << PA1);
-     
-     } else {
-     //	PORTA &= ~(1 << PA1);
-     return;
-     }  */
-
-    //_lastinputb = _inputb;
     if (_lastInbit == 1) {
         _bit = LOW;
     } else {
         _bit = HIGH;
     }
-    _lastInbit = 1;
+    _lastInbit = 1;  //save the fact, that isr was called "last time"
 
     switch (_state) {
     case SYNC:
@@ -267,52 +234,15 @@ void PX::isr() {
 void PX::isr2() {
 
     // interrupt service routine 
-    // driven by RISING signal INT0 and INT1 (pins 2 and 3 on ATmega328)
+    // driven by RISING signal INT1 (pin 3 on ATmega328)
+    // nearly identical to PX::isr() except for polarity
 
-    // 3 different states are distinguished
-    //     1. SNYC = looking for a SYNC signal
-    //     2. ADDR = (after SYNC received) look for base address (0..15)
-    //     3. DATA = (after ADDR decoded) decode the 7 data-bytes
-
-    // is SX2 = high ??
-    //_inbit = (SX2_PINREG & ( _BV(SX2_PORTPIN) ) ) > 0;
-
-    //_inbit = (SX2_PINREG & _BV(SX2_PORTPIN)) > 0;  
-    // (if not, SX1 must have caused this interrupt)
-
-    // sx bit is high, when the polarity has changed
-    // sx bit is low (0), when the polarity has not changed
-
-    //_bit = ~(_inbit == _lastInbit);  
-    //ncount = _bit;
-    //_lastInbit = _inbit;    
-
-    /*    uint8_t _inputd = PIND & ( (1 << SX1) | (1 << SX2) );
-     uint8_t _in;
-
-     
-     if  (_inputd == (1 << SX1)) {
-     // SX1 toggled and is high
-     _in = 1;
-     //	PORTA |= (1 << PA1);
-
-     } else if  (_inputd == (1 << SX2)) {
-     // SX2 toggled and is high
-     _in = 0;
-     // 	PORTA |= (1 << PA1);
-     
-     } else {
-     //	PORTA &= ~(1 << PA1);
-     return;
-     }  */
-
-    //_lastinputb = _inputb;
     if (_lastInbit == 0) {
         _bit = LOW;
     } else {
         _bit = HIGH;
     }
-    _lastInbit = 0;
+    _lastInbit = 0;  // save the fact, that isr2 was called "last time"
 
     switch (_state) {
     case SYNC:
