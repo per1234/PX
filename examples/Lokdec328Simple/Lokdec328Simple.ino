@@ -6,19 +6,19 @@
  
  Hardware siehe:
  https://opensx.net/projekte/funktionsdekoder/arduino-lokdecoder/
+
+ (C) 2017 Michael Blank, opensx.net
  
  */
 #include "Arduino.h"
 #include "PX.h"
-
-//#include <Adafruit_SleepyDog.h>
 
 #define HW  "HW sx-loc-dec2-328"
 #define SW  "SW Simple-12-jan-2017"
 
 #define PXADDR  16   // SX(PX) Lok-Adresse
 #define NSPEED   4   // Max speed (=Fahrstufe *NSPEED => PWM Output
-#define V0SPEED  16  // Anfahrt
+#define V0SPEED  16  // Anfahrts-PWM Wert
 
 #define FIN    9     // Motor PWM pin1 
 #define RIN   10     // Motor PWM pin2 
