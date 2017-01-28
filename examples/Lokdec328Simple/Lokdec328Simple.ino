@@ -14,11 +14,11 @@
 #include "PX.h"
 
 #define HW  "HW sx-loc-dec2-328"
-#define SW  "SW Simple-12-jan-2017"
+#define SW  "SW Simple-28-jan-2017"   // different PWM frequencies
 
 #define PXADDR  16   // SX(PX) Lok-Adresse
-#define NSPEED   4   // Max speed (=Fahrstufe *NSPEED => PWM Output
-#define V0SPEED  16  // Anfahrts-PWM Wert
+#define NSPEED   3   // Max speed (=Fahrstufe *NSPEED => PWM Output
+#define V0SPEED  25  // Anfahrts-PWM Wert
 
 #define FIN    9     // Motor PWM pin1 
 #define RIN   10     // Motor PWM pin2 
@@ -49,7 +49,11 @@ void setup() {
 #ifdef DEBUG_7SEG
     Serial.begin(9600);
 #endif
-    TCCR1B = (TCCR1B & 0b11111000) | 0x01;   // 32kHz PWM Frequenz
+    //TCCR1B = (TCCR1B & 0b11111000) | 0x01;   // 32kHz PWM Frequenz
+    //TCCR1B = TCCR1B & B11111000 | B00000010;    // set timer 1 divisor to     8 for PWM frequency of  3921.16 Hz
+    //TCCR1B = TCCR1B & B11111000 | B00000011;    // set timer 1 divisor to    64 for PWM frequency of   490.20 Hz (The DEFAULT)
+    TCCR1B = TCCR1B & B11111000 | B00000100;    // set timer 1 divisor to   256 for PWM frequency of   122.55 Hz
+    //TCCR1B = TCCR1B & B11111000 | B00000101;    // set timer 1 divisor to  1024 for PWM frequency of    30.64 Hz
 
     pinMode(FIN, OUTPUT);
     pinMode(RIN, OUTPUT);
